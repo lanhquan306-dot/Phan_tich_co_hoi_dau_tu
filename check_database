@@ -1,0 +1,45 @@
+
+import sqlite3
+from pathlib import Path
+
+db_path = Path(__file__).resolve().parent / "data" / "market_data.db"
+
+if not db_path.exists():
+    print("KHONG TIM THAY DATABASE:", db_path)
+    raise SystemExit
+
+conn = sqlite3.connect(str(db_path))
+
+try:
+    tables = conn.execute("""
+        SELECT name
+        FROM sqlite_master
+        WHERE type = 'table'
+          AND name NOT LIKE 'sqlite_%'
+        ORDER BY name
+    """).fetchall()
+
+    print("CAC BANG TRONG DATABASE:")
+
+    for (table_name,) in tables:
+        print(f"\n--- BANG: {table_name} ---")
+
+        columns = conn.execute(
+            f'PRAGMA table_info("{table_name}")'
+        ).fetchall()
+
+        print("Cac cot:")
+        for column in columns:
+            print("-", column[1], "| kieu:", column[2])
+
+        # Xem thử 3 dòng dữ liệu
+        rows = conn.execute(
+            f'SELECT * FROM "{table_name}" LIMIT 3'
+        ).fetchall()
+
+        print("Du lieu mau:")
+        for row in rows:
+            print(row)
+
+finally:
+    conn.close()
